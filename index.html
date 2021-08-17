@@ -30,6 +30,7 @@ docHead.appendChild(newLink);
   var grass = null;
   var boxes = null, boxes_count = 4;
   var fruit = null, fruit_count = 2;
+  var pair = null;
   
   var Pool = (function() {
     var create = function(type, size) {
@@ -300,7 +301,7 @@ docHead.appendChild(newLink);
       boxes = [];
       for (var i = 0; i < boxes_count; i++) {
         boxes.push({
-          "x": Math.floor(Math.random() * 18) * ((screenWidth/4)/2) + (screenWidth/4)/2,
+          "x": 140 + Math.floor(Math.random() * 18) * ((screenWidth/4)/2) + (screenWidth/4)/2,
           "y": thor.ground,
           "state": "normal"
         });
@@ -315,6 +316,12 @@ docHead.appendChild(newLink);
           "state": "normal"
         });
       }
+
+      pair = {
+        "x": screenWidth/2,
+        "y": thor.ground,
+        "state": "waiting"
+      };
   }
 
   function loop() {
@@ -389,6 +396,10 @@ docHead.appendChild(newLink);
       }
     }
     
+    if (pair.state == 'waiting') {
+      pair.x = pair.x - thor.speed * 90;
+    }
+    
     for (var i = 0; i < fruit.length; i++) {
       if (fruit[i].x < 0) {
         fruit[i].state = "normal";
@@ -401,6 +412,10 @@ docHead.appendChild(newLink);
   }
 
   function collisions() {
+    if (pair.x < 40) {
+      pair.state = 'running';
+    }
+  
     for (var i = 0; i < boxes.length; i++) {
       if ( boxes[i].state == "normal"
         && Math.abs(thor.pos.getX() - boxes[i].x) < 20
@@ -467,27 +482,46 @@ docHead.appendChild(newLink);
     context.rotate(thor.angle);
 
     var thor_img = new Image();
+    var pair_img = new Image();
     var frame_offset = 0;
     var cycle = thor.cycle;
     if (thor.pos.getY() == thor.ground) {
       if (thor.frame < (cycle/3)) {
           thor_img.src = "img/thor-0.png";
+          pair_img.src = "img/pair-0.png";
           frame_offset = 0;
       } else if (thor.frame < (2*cycle/3)) {
           thor_img.src = "img/thor-1.png";
+          pair_img.src = "img/pair-1.png";
           frame_offset = -2;
       } else {
           thor_img.src = "img/thor-2.png";
+          pair_img.src = "img/pair-2.png";
           frame_offset = 2;
       }
     } else if (thor.pos.getY() < thor.ground && thor.pos.getY() > ((35/40) * thor.ground)) {
       thor_img.src = "img/thor-1.png";
+      pair_img.src = "img/pair-1.png";
       frame_offset = -3;
     } else if (thor.pos.getY() <= ((35/40) * thor.ground)) {
       thor_img.src = "img/thor-2.png";
+      pair_img.src = "img/pair-2.png";
       frame_offset = 3;
     }
     var scale = 0.12;
+    if (pair.state == 'running') {
+      var fac = Math.abs(thor.pos.getY() - 90) / 4;
+      context.drawImage(
+        pair_img,
+        -pair_img.width*0.5*scale + frame_offset + 10,
+        (
+          thor.state == 'jumping'
+            ? -pair_img.height*0.5*scale - 4  - fac
+            : -pair_img.height*0.5*scale - 4
+        ), 
+        pair_img.width*scale*0.9, pair_img.height*scale*0.9
+      );
+    }
     context.drawImage(
       thor_img,
       -thor_img.width*0.5*scale + frame_offset, -thor_img.height*0.5*scale, 
@@ -521,6 +555,17 @@ docHead.appendChild(newLink);
         boxes[i].x - box_img.width*(0.5-ground_x)*scale,
         boxes[i].y - box_img.height*(0.6-ground_y)*scale, 
         box_img.width*scale, box_img.height*scale
+      );
+    }
+
+    if (pair.state == 'waiting') {
+      var pair_img = new Image(); 
+      pair_img.src = "img/pair-0.png";
+      context.drawImage(
+        pair_img,
+        pair.x,
+        pair.y - 18, 
+        25, 25
       );
     }
 
