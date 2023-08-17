@@ -31,6 +31,8 @@ docHead.appendChild(newLink);
   var boxes = null, boxes_count = 4;
   var fruit = null, fruit_count = 2;
   var pair = null;
+  var rbb_x_offset = 10;
+  var rbb_x_offset_ = 10;
   
   var Pool = (function() {
     var create = function(type, size) {
@@ -336,9 +338,6 @@ docHead.appendChild(newLink);
 
     if (thor.idle) return;
 
-    if (keyLeft) thor.angle -= 0.1;
-    if (keyRight) thor.angle += 0.1;
-
     if (keyUp) {
       thor.thrust.setLength(0.1);
       thor.thrust.setAngle(thor.angle);
@@ -464,7 +463,7 @@ docHead.appendChild(newLink);
   }
 
   function render(){
-    context.fillStyle = 'green';
+    context.fillStyle = '#4ea64e';
     context.globalAlpha = 0.4;
     context.fillRect(0, 0, screenWidth, screenHeight);
     context.globalAlpha = 1;
@@ -544,6 +543,19 @@ docHead.appendChild(newLink);
     }
 
     context.globalAlpha = 1;
+
+    if (rbb_x_offset > -200) {
+      rbb_x_offset -= 0.5;
+      rbb_x_offset_ -= 0.42;
+      var rbb_img = new Image(); 
+      rbb_img.src = "img/rbb.png";
+      context.filter = "brightness(90%) grayscale(10%) opacity(0.3)";
+      context.drawImage(rbb_img, rbb_x_offset_ - 10, 16, 145, 70);
+      context.filter = "brightness(90%) grayscale(8%) opacity(0.8)";
+      context.drawImage(rbb_img, rbb_x_offset, 23, 140, 70);
+      context.filter = "brightness(100%) grayscale(0%) opacity(1)";
+    }
+
     for (var i = 0; i < boxes.length; i++) {
       var box_img = new Image(); 
       box_img.src = "img/box-" + boxes[i].state + ".png";
@@ -585,7 +597,7 @@ docHead.appendChild(newLink);
 
     context.globalAlpha = 1;
     context.strokeStyle = 'black';
-    context.fillStyle = 'orange';
+    context.fillStyle = '#f2b33d';
     context.fillRect(screenWidth*0.3, screenHeight*0.03, screenWidth*0.4*thor.health, screenHeight*0.06);
     context.rect(screenWidth*0.3, screenHeight*0.03, screenWidth*0.4, screenHeight*0.06);
     context.stroke();
