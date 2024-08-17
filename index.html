@@ -29,7 +29,7 @@ docHead.appendChild(newLink);
   <script>
   var grass = null;
   var boxes = null, boxes_count = 4;
-  var fruit = null, fruit_count = 2;
+  var float = null, float_count = 2;
   var pair = null;
   var rbb_x_offset = 10;
   var rbb_x_offset_ = 10;
@@ -169,7 +169,8 @@ docHead.appendChild(newLink);
       obj.cycle = 20;
       obj.state = 'running';
       obj.ground = screenHeight * 0.75;
-      obj.health = 1;
+      obj.longevity = 1;
+      obj.health = obj.longevity;
       obj.score = 0;
 
       return obj;
@@ -289,6 +290,16 @@ docHead.appendChild(newLink);
     };
   }
 
+  function floating() {
+    return (
+      Math.floor(Math.random() * 10) < 5
+      ?
+      'carrot'
+      :
+      (Math.floor(Math.random() * 10) < 5 ? 'apple' : 'cloud')
+    );
+  }
+
   function initialize() {
       thor = Thor.create(screenWidth * 0.2, screenHeight >> 1, this);
 
@@ -309,12 +320,12 @@ docHead.appendChild(newLink);
         });
       }
 
-      fruit = [];
-      for (var i = 0; i < fruit_count; i++) {
-        fruit.push({
+      float = [];
+      for (var i = 0; i < float_count; i++) {
+        float.push({
           "x": Math.floor(Math.random() * 18) * ((screenWidth/4)/2) + (screenWidth/4)/2,
           "y": screenHeight * 0.3,
-          "f": Math.floor(Math.random() * 10) < 5 ? 'carrot' : 'apple',
+          "f": floating(),
           "state": "normal"
         });
       }
@@ -399,13 +410,13 @@ docHead.appendChild(newLink);
       pair.x = pair.x - thor.speed * 90;
     }
     
-    for (var i = 0; i < fruit.length; i++) {
-      if (fruit[i].x < 0) {
-        fruit[i].state = "normal";
-        fruit[i].x = Math.floor(Math.random() * 18) * ((screenWidth/4)/2) + (screenWidth/4)/2 + screenWidth;
-        fruit[i].f = Math.floor(Math.random() * 10) < 5 ? 'carrot' : 'apple';
+    for (var i = 0; i < float.length; i++) {
+      if (float[i].x < 0) {
+        float[i].state = "normal";
+        float[i].x = Math.floor(Math.random() * 18) * ((screenWidth/4)/2) + (screenWidth/4)/2 + screenWidth;
+        float[i].f = floating();
       } else {
-        fruit[i].x = fruit[i].x - thor.speed*thor.ground;
+        float[i].x = float[i].x - thor.speed*thor.ground;
       }
     }
   }
@@ -423,7 +434,8 @@ docHead.appendChild(newLink);
          
         if (Math.abs(thor.pos.getY() - thor.ground) < 5) {
           boxes[i].state = "hit";
-          thor.health = Math.max(0, thor.health - 0.33);
+          thor.health = thor.health - 0.4;
+          console.log(thor.health);
         } else {
           boxes[i].state = "flat";
           thor.speed = Math.min(0.06, thor.speed + 0.001);
@@ -433,22 +445,29 @@ docHead.appendChild(newLink);
       }
     }
 
-    for (var i = 0; i < fruit.length; i++) {
-      if ( fruit[i].state == "normal"
-        && Math.abs(thor.pos.getX() - fruit[i].x) < 20
-        && Math.abs(thor.pos.getY() - fruit[i].y) < 20
+    for (var i = 0; i < float.length; i++) {
+      if ( float[i].state == "normal"
+        && Math.abs(thor.pos.getX() - float[i].x) < 20
+        && Math.abs(thor.pos.getY() - float[i].y) < 20
          ) {
-        fruit[i].state = "eaten";
-        if (fruit[i].f == "carrot") {
-          thor.health = Math.min(1, thor.health + 0.1);
+        float[i].state = "eaten";
+        if (float[i].f == "cloud") {
+          if (thor.longevity < 2) {
+            thor.longevity = Math.min(2, thor.longevity + 0.05);
+          } else {
+            thor.health = Math.min(thor.longevity, thor.health + 0.3);
+          }
+        } else if (float[i].f == "carrot") {
+          thor.health = Math.min(thor.longevity, thor.health + 0.1);
         } else {
-          thor.health = Math.min(1, thor.health + 0.4);
+          thor.health = Math.min(thor.longevity, thor.health + 0.2);
         }
       }
     }
-    
-    if (thor.health <= 0.05) {
-      thor.health = 0;
+
+    thor.health = Math.max(thor.health, -0.35);
+    if (thor.health <= -0.33) {
+      thor.health = -0.35
       renderObjects();
       stop();
     }
@@ -582,24 +601,43 @@ docHead.appendChild(newLink);
     }
 
     context.globalAlpha = 1;
-    for (var i = 0; i < fruit.length; i++) {
-      if (fruit[i].state == "normal") {
-        var fruit_img = new Image(); 
-        fruit_img.src = "img/" + fruit[i].f + ".png";
+    for (var i = 0; i < float.length; i++) {
+      if (float[i].state == "normal") {
+        var float_img = new Image();
+        float_img.src = "img/" + float[i].f + ".png";
         var scale = 0.15;
+        if (float[i].f == "cloud") {
+          scale = 0.06;
+          if (Math.random() < 0.15) {
+            var bolt_img = new Image();
+            bolt_img.src = "img/bolt.png";
+            context.drawImage(
+              bolt_img,
+              float[i].x - bolt_img.width*0.5*0.1 - 14, float[i].y + bolt_img.height*0.1*scale - 10, 
+              bolt_img.width*0.2, bolt_img.height*0.2
+            );
+          }
+          context.filter = "brightness(90%) grayscale(8%) opacity(0.5)";
+        }
         context.drawImage(
-          fruit_img,
-          fruit[i].x - fruit_img.width*0.5*scale, fruit[i].y - fruit_img.height*0.6*scale, 
-          fruit_img.width*scale, fruit_img.height*scale
+          float_img,
+          float[i].x - float_img.width*0.5*scale, float[i].y - float_img.height*0.6*scale, 
+          float_img.width*scale, float_img.height*scale
         );
+        context.filter = "brightness(100%) grayscale(0%) opacity(1)";
       }
     }
 
     context.globalAlpha = 1;
     context.strokeStyle = 'black';
     context.fillStyle = '#f2b33d';
-    context.fillRect(screenWidth*0.3, screenHeight*0.03, screenWidth*0.4*thor.health, screenHeight*0.06);
-    context.rect(screenWidth*0.3, screenHeight*0.03, screenWidth*0.4, screenHeight*0.06);
+    const left = 30;
+    const right = screenWidth - 38;
+    const width = (right - left) / 2;
+    context.fillStyle = '#222222';
+    context.fillRect(left, screenHeight*0.026, left + (width * thor.longevity) + 2, screenHeight*0.08);
+    context.fillStyle = '#f2b33d';
+    context.fillRect(left + 0.8, screenHeight*0.03 + 0.8, left + (width * thor.health), screenHeight*0.06);
     context.stroke();
 
     context.fillStyle = 'white';
