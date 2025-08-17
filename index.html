@@ -27,7 +27,11 @@ newLink.href = 'data:image/png;base64,'+favIcons[Math.floor(Math.random()*2)];
 docHead.appendChild(newLink);
   </script>
   <script>
+  var time = 0;
+  var time_direction = 1;
+  var time_rate = 0.01;
   var grass = null;
+  var fireflies = null;
   var boxes = null, boxes_count = 4;
   var float = null, float_count = 2;
   var pair = null;
@@ -304,8 +308,16 @@ docHead.appendChild(newLink);
       thor = Thor.create(screenWidth * 0.2, screenHeight >> 1, this);
 
       grass = [];
-      for (var i = 0; i < 100; i++) {
+      for (var i = 0; i < 60; i++) {
         grass.push({
+          "x": Math.random() * screenWidth,
+          "y": Math.random() * screenHeight
+        });
+      }
+
+      fireflies = [];
+      for (var i = 0; i < 20; i++) {
+        fireflies.push({
           "x": Math.random() * screenWidth,
           "y": Math.random() * screenHeight
         });
@@ -338,6 +350,10 @@ docHead.appendChild(newLink);
   }
 
   function loop() {
+    if ((time == 0 && time_direction == -1) || (time == 1000 && time_direction == 1)) {
+      time_direction *= -1;
+    }
+    time = time + time_direction;
     updateThor();
     collisions();
     render();
@@ -395,6 +411,10 @@ docHead.appendChild(newLink);
  
     for (var i = 0; i < grass.length; i++) {
       grass[i].x = (grass[i].x - thor.speed*(grass[i].y) + (grass[i].x <= 0 ? screenWidth : 0));
+    }
+
+    for (var i = 0; i < fireflies.length; i++) {
+      fireflies[i].x = (fireflies[i].x - thor.speed*(fireflies[i].y) + (fireflies[i].x <= 0 ? screenWidth : 0));
     }
 
     for (var i = 0; i < boxes.length; i++) {
@@ -467,8 +487,10 @@ docHead.appendChild(newLink);
 
     thor.health = Math.max(thor.health, -0.35);
     if (thor.health <= -0.33) {
-      thor.health = -0.35
-      renderObjects();
+      thor.health = -0.35;
+      renderObjects(false);
+      renderThor();
+      renderObjects(true);
       stop();
     }
   }
@@ -482,13 +504,16 @@ docHead.appendChild(newLink);
   }
 
   function render(){
-    context.fillStyle = '#4ea64e';
     context.globalAlpha = 0.4;
+    context.fillStyle = "#4ea64e";
+    context.filter = 'brightness(' + (75 + (25 * Math.cos(time_rate * time))) + '%)';
     context.fillRect(0, 0, screenWidth, screenHeight);
+    context.filter = 'brightness(100%)';
     context.globalAlpha = 1;
 
-    renderObjects();
+    renderObjects(false);
     renderThor();
+    renderObjects(true);
   }
 
   function renderThor() {
@@ -549,16 +574,78 @@ docHead.appendChild(newLink);
     context.restore();
   }
 
-  function renderObjects() {
+  function renderObjects(in_front) {
     //inverse for loop = more performance.
 
     var i = hScan;
     context.lineWidth = 1;
 
-    context.globalAlpha = 0.1;
-    for (var i = 0; i < grass.length; i++) {
-      context.fillStyle = '#FFFFFF';
-      context.fillRect(grass[i].x, grass[i].y, 3, 3);
+    if (in_front) {
+      context.globalAlpha = 0.2 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
+      for (var i = 0; i < grass.length; i++) {
+        if (grass[i].y >= (0.75 * screenHeight)) {
+          const y = grass[i].y;
+          const scale = 1 / Math.pow(Math.sqrt(((screenHeight - y) / screenHeight)), 0.8);
+          context.fillStyle = '#AAFFAA';
+          context.fillRect(
+            grass[i].x,
+            grass[i].y,
+            2 * scale,
+            2 * scale
+          );
+        }
+      }
+
+      context.globalAlpha = 0.5 * (1 - ((50 + (50 * Math.cos(time_rate * time))) / 100));
+      for (var i = 0; i < fireflies.length; i++) {
+        if (fireflies[i].y >= (0.75 * screenHeight)) {
+          const color = 'rgba(255,255,0,1)';
+          context.fillStyle = color;
+          const sinX = Math.sin(fireflies[i].x / 10);
+          const y = fireflies[i].y + sinX;
+          const scale = 1 / Math.sqrt(((screenHeight - y) / screenHeight));
+          context.fillRect(
+            fireflies[i].x + (2 * (i % 5) * Math.sin(y)),
+            fireflies[i].y + ((1 + (i % 3)) * sinX),
+            (1 + (i % 2)) * Math.min(2, scale),
+            (1 + (i % 2)) * Math.min(2, scale)
+          );
+        }
+      }
+
+      return;
+    } else {
+      context.globalAlpha = 0.2 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
+      for (var i = 0; i < grass.length; i++) {
+        const y = grass[i].y;
+        const scale = 1 / Math.sqrt(((screenHeight - y) / screenHeight));
+        if (grass[i].y < (0.75 * screenHeight)) {
+          context.fillStyle = '#AAFFAA';
+          context.fillRect(
+            grass[i].x,
+            grass[i].y,
+            2 * scale,
+            2 * scale
+          );
+        }
+      }
+
+      context.globalAlpha = 0.5 * (1 - ((50 + (50 * Math.cos(time_rate * time))) / 100));
+      for (var i = 0; i < fireflies.length; i++) {
+        if (fireflies[i].y < (0.75 * screenHeight)) {
+          const color = 'rgba(255,255,0,0.75)';
+          context.fillStyle = color;
+          const sinX = Math.sin(fireflies[i].x / 10);
+          const y = fireflies[i].y + sinX;
+          const scale = 1 / Math.sqrt(((screenHeight - y) / screenHeight));
+          context.fillRect(
+            fireflies[i].x + (2 * (i % 5) * Math.sin(y)),
+            fireflies[i].y + ((1 + (i % 3)) * sinX),
+            (1 + (i % 2)) * Math.min(2, scale),
+            (1 + (i % 2)) * Math.min(2, scale)
+          );
+        }
+      }
     }
 
     context.globalAlpha = 1;
