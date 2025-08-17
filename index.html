@@ -505,10 +505,16 @@ docHead.appendChild(newLink);
 
   function render(){
     context.globalAlpha = 0.4;
-    context.fillStyle = "#4ea64e";
-    context.filter = 'brightness(' + (75 + (25 * Math.cos(time_rate * time))) + '%)';
+    //const red = 55 - (30 - (15 * Math.cos(time_rate * time)));
+    //const green = 166 - (20 - (10 * Math.cos(time_rate * time)));
+    //const blue = 75 + (35 * -Math.cos(time_rate * time));
+    const red = 78 - (30 - (30 * Math.cos(time_rate * time)));
+    const green = 166 - (20 - (20 * Math.cos(time_rate * time)));
+    const blue = 78 + (30 - (30 * Math.cos(time_rate * time)));
+    context.fillStyle = "rgb(" + red + ", " + green + ", " + (3 + blue) + ")"; //4ea64e 78 166 78
+    //context.filter = 'brightness(' + (75 + (25 * Math.cos(time_rate * time))) + '%)';
     context.fillRect(0, 0, screenWidth, screenHeight);
-    context.filter = 'brightness(100%)';
+    //context.filter = 'brightness(100%)';
     context.globalAlpha = 1;
 
     renderObjects(false);
@@ -581,7 +587,7 @@ docHead.appendChild(newLink);
     context.lineWidth = 1;
 
     if (in_front) {
-      context.globalAlpha = 0.2 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
+      context.globalAlpha = 0.25 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
       for (var i = 0; i < grass.length; i++) {
         if (grass[i].y >= (0.75 * screenHeight)) {
           const y = grass[i].y;
@@ -615,7 +621,7 @@ docHead.appendChild(newLink);
 
       return;
     } else {
-      context.globalAlpha = 0.2 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
+      context.globalAlpha = 0.25 * ((60 + (40 * Math.cos(time_rate * time))) / 100);
       for (var i = 0; i < grass.length; i++) {
         const y = grass[i].y;
         const scale = 1 / Math.sqrt(((screenHeight - y) / screenHeight));
